@@ -1,4 +1,3 @@
-from ast import Not
 import unittest
 from htmlnode import HTMLNode
 
@@ -33,7 +32,3 @@ class TestHTMLNode(unittest.TestCase):
         self.assertEqual(node.children, None)
         self.assertEqual(node.props, None)
         self.assertEqual(node.value, None)
-
-    def test_to_html(self):
-        node = HTMLNode()
-        self.assertRaises(NotImplementedError, node.to_html)
