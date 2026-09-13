@@ -1,5 +1,6 @@
 import unittest
-from textnode import TextNode, TextType
+from textnode import TextNode, TextType, text_node_to_html
+from leafnode import LeafNode
 
 
 class TestTextNode(unittest.TestCase):
@@ -7,6 +8,53 @@ class TestTextNode(unittest.TestCase):
         node = TextNode("This is a text node", TextType.BOLD)
         node2 = TextNode("This is a text node", TextType.BOLD)
         self.assertEqual(node, node2)
+
+    def test_text_node_to_html_text_types(self):
+        cases = [
+            (TextType.PLAIN, None),
+            (TextType.BOLD, "b"),
+            (TextType.ITALIC, "i"),
+            (TextType.CODE, "code"),
+        ]
+        for text_type, expected_tag in cases:
+            with self.subTest(text_type=text_type):
+                node = TextNode("Some text", text_type)
+                result = text_node_to_html(node)
+                self.assertIsInstance(result, LeafNode)
+                self.assertEqual(result.tag, expected_tag)
+                self.assertEqual(result.value, "Some text")
+                self.assertIsNone(result.props)
+                self.assertIsNone(result.children)
+
+    def test_text_node_to_html_link(self):
+        node = TextNode("About", TextType.LINK, "https://example.com/about")
+        result = text_node_to_html(node)
+        self.assertIsInstance(result, LeafNode)
+        self.assertEqual(result.tag, "a")
+        self.assertEqual(result.value, "About")
+        self.assertEqual(result.props, {"href": "https://example.com/about"})
+
+    def test_text_node_to_html_image(self):
+        node = TextNode("A mountain", TextType.IMAGE, "/images/mountain.png")
+        result = text_node_to_html(node)
+        self.assertIsInstance(result, LeafNode)
+        self.assertEqual(result.tag, "img")
+        self.assertEqual(result.value, "")
+        self.assertEqual(
+            result.props,
+            {"src": "/images/mountain.png", "alt": "A mountain"},
+        )
+
+    def test_text_node_to_html_empty_text(self):
+        node = TextNode("", TextType.PLAIN)
+        result = text_node_to_html(node)
+        self.assertIsNone(result.tag)
+        self.assertEqual(result.value, "")
+        self.assertEqual(result.to_html(), "")
+
+    def test_text_node_to_html_invalid_type(self):
+        node = TextNode("Some text", "invalid")
+        self.assertRaises(ValueError, text_node_to_html, node)
 
     def test_not_eq(self):
         node = TextNode("This is a text node", TextType.BOLD)
