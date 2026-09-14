@@ -6,7 +6,6 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
     for old_node in old_nodes:
         if old_node.text_type != TextType.TEXT:
             new_nodes.append(old_node)
-
         if delimiter not in old_node.text or old_node.text.count(delimiter) < 2:
             raise Exception(f"Delimiter '{delimiter}' not found in text: {old_node.text}")
 
@@ -19,7 +18,3 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
                 new_nodes.append(TextNode(text, text_type))
 
     return new_nodes
-
-node = TextNode("This is text with a `code block` word", TextType.TEXT)
-new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
-print(new_nodes)
