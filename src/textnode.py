@@ -4,10 +4,10 @@ from leafnode import LeafNode
 
 
 class TextType(Enum):
-    PLAIN = "plain_text"
-    BOLD = "bold_text"
-    ITALIC = "italic_text"
-    CODE = "code_text"
+    TEXT = "text"
+    BOLD = "bold"
+    ITALIC = "italic"
+    CODE = "code"
     LINK = "link"
     IMAGE = "image"
 
