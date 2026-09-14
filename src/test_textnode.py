@@ -11,7 +11,7 @@ class TestTextNode(unittest.TestCase):
 
     def test_text_node_to_html_text_types(self):
         cases = [
-            (TextType.PLAIN, None),
+            (TextType.TEXT, None),
             (TextType.BOLD, "b"),
             (TextType.ITALIC, "i"),
             (TextType.CODE, "code"),
@@ -46,7 +46,7 @@ class TestTextNode(unittest.TestCase):
         )
 
     def test_text_node_to_html_empty_text(self):
-        node = TextNode("", TextType.PLAIN)
+        node = TextNode("", TextType.TEXT)
         result = text_node_to_html(node)
         self.assertIsNone(result.tag)
         self.assertEqual(result.value, "")
