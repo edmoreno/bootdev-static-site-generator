@@ -1,3 +1,6 @@
+from random import seed
+from shlex import split
+
 from textnode import TextNode, TextType
 import re
 
@@ -82,3 +85,14 @@ def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
         if original_text != "":
             new_nodes.append(TextNode(original_text, TextType.TEXT))
     return new_nodes
+
+def text_to_textnodes(text: str) -> list[TextNode]:
+    if not text:
+        return []
+    seed_node = TextNode(text, TextType.TEXT)
+    processed_nodes = split_nodes_image([seed_node])
+    processed_nodes = split_nodes_link(processed_nodes)
+    processed_nodes = split_nodes_delimiter(processed_nodes, '**', TextType.BOLD)
+    processed_nodes = split_nodes_delimiter(processed_nodes, '_', TextType.ITALIC)
+    processed_nodes = split_nodes_delimiter(processed_nodes, '`', TextType.CODE)
+    return processed_nodes
