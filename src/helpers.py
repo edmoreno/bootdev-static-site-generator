@@ -1,6 +1,3 @@
-from random import seed
-from shlex import split
-
 from textnode import TextNode, TextType
 import re
 
