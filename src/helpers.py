@@ -93,3 +93,9 @@ def text_to_textnodes(text: str) -> list[TextNode]:
     processed_nodes = split_nodes_delimiter(processed_nodes, '_', TextType.ITALIC)
     processed_nodes = split_nodes_delimiter(processed_nodes, '`', TextType.CODE)
     return processed_nodes
+
+def markdown_to_blocks(markdown: str) -> list[str]:
+    split_string = markdown.split('\n\n')
+    trimmed_strings = map(lambda x: x.strip(), split_string)
+    filtered_strings = list(filter(lambda x: x != '', trimmed_strings))
+    return filtered_strings
