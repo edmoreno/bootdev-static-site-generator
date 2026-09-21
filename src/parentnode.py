@@ -6,9 +6,15 @@ class ParentNode(HTMLNode):
         children: list[HTMLNode],
         props: dict[str, str] | None = None
     ) -> None:
+        """Create a node with a tag, child nodes, and optional HTML attributes."""
         super().__init__(tag, None, children, props)
 
     def to_html(self) -> str:
+        """Render children in order inside the parent tag.
+
+        Raise ValueError for a missing or empty tag or children collection.
+        Propagate errors raised while rendering a child.
+        """
         if self.tag is None or self.tag == '':
             raise ValueError("tag is required")
 

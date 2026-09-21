@@ -1,7 +1,15 @@
-from textnode import TextNode, TextType
+from block import BlockType, block_to_blocktype
+from htmlnode import HTMLNode
+from parentnode import ParentNode
+from textnode import TextNode, TextType, text_node_to_html
 import re
 
 def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: TextType) -> list[TextNode]:
+    """Split plain-text nodes around paired delimiters into plain and formatted nodes.
+
+    Preserve non-text nodes and text without delimiters. Raise an exception
+    when a text node contains an unmatched delimiter.
+    """
     new_nodes = []
 
     for old_node in old_nodes:
@@ -25,12 +33,19 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
     return new_nodes
 
 def extract_markdown_images(text: str) -> list[tuple[str, str]]:
+    """Return Markdown image alt-text and URL pairs in order of appearance."""
     return re.findall(r"!\[(.*?)\]\((.*?)\)", text)
 
 def extract_markdown_links(text: str) -> list[tuple[str, str]]:
+    """Return Markdown link label and URL pairs, excluding image syntax."""
     return re.findall(r"(?<!\!)\[(.*?)\]\((.*?)\)", text)
 
 def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
+    """Split image Markdown in plain-text nodes into text and image nodes.
+
+    Preserve non-text nodes and nodes without images. Raise ValueError if
+    a matched image cannot be separated from the remaining text.
+    """
     new_nodes = []
     for old_node in old_nodes:
         if old_node.text_type != TextType.TEXT:
@@ -61,6 +76,11 @@ def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
 
 
 def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
+    """Split link Markdown in plain-text nodes into text and link nodes.
+
+    Preserve non-text nodes and nodes without links. Raise ValueError if
+    a matched link cannot be separated from the remaining text.
+    """
     new_nodes = []
     for old_node in old_nodes:
         if old_node.text_type != TextType.TEXT:
@@ -84,6 +104,11 @@ def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
     return new_nodes
 
 def text_to_textnodes(text: str) -> list[TextNode]:
+    """Parse inline images, links, bold, italic, and code into ordered text nodes.
+
+    Return an empty list for empty input. Unmatched formatting delimiters
+    raise an exception.
+    """
     if not text:
         return []
     seed_node = TextNode(text, TextType.TEXT)
@@ -95,7 +120,103 @@ def text_to_textnodes(text: str) -> list[TextNode]:
     return processed_nodes
 
 def markdown_to_blocks(markdown: str) -> list[str]:
+    """Split Markdown on double newlines, trim each block, and discard empty blocks."""
     split_string = markdown.split('\n\n')
     trimmed_strings = map(lambda x: x.strip(), split_string)
     filtered_strings = list(filter(lambda x: x != '', trimmed_strings))
     return filtered_strings
+
+def markdown_to_html_node(markdown: str) -> list[HTMLNode]:
+    markdown_block_list = markdown_to_blocks(markdown)
+    block_nodes = []
+
+    for markdown_block in markdown_block_list:
+        block_type = block_to_blocktype(markdown_block)
+        header_level = determine_header_level(markdown_block)
+        block_markdown_clean = clean_block_markdown_syntax(markdown_block, block_type)
+
+        if block_type == BlockType.CODE:
+            code_node = TextNode(block_markdown_clean, TextType.CODE)
+            html_code_node = [text_node_to_html(code_node)]
+            html_node = ParentNode("pre", html_code_node)
+        elif block_type == BlockType.UNORDERED_LIST or block_type == BlockType.ORDERED_LIST:
+            lines = block_markdown_clean.split("\n")
+            child_nodes = []
+            for line in lines:
+                children = text_to_children(line)
+                parent_node = ParentNode("li", children=children)
+                child_nodes.append(parent_node)
+            html_node = ParentNode(
+                tag=blocktype_to_html_tag(block_type, header_level),
+                children=child_nodes
+            )
+        else:
+            child_nodes = text_to_children(block_markdown_clean)
+            html_node = ParentNode(
+                tag=blocktype_to_html_tag(block_type, header_level),
+                children=child_nodes
+            )
+
+        block_nodes.append(html_node)
+
+    return ParentNode("div", children=block_nodes)
+
+
+def blocktype_to_html_tag(blocktype: BlockType, header_level: int) -> str:
+    if blocktype == BlockType.PARAGRAPH:
+        return "p"
+    if blocktype == BlockType.HEADING:
+        return f"h{header_level}"
+    if blocktype == BlockType.QUOTE:
+        return "blockquote"
+    if blocktype == BlockType.UNORDERED_LIST:
+        return "ul"
+    if blocktype == BlockType.ORDERED_LIST:
+        return "ol"
+    if blocktype == BlockType.CODE:
+        return "code"
+
+def text_to_children(text: str) -> list[HTMLNode]:
+    text_nodes = text_to_textnodes(text)
+    html_nodes = []
+
+    for text_node in text_nodes:
+        html_nodes.append(text_node_to_html(text_node))
+
+    return html_nodes
+
+def determine_header_level(markdown: str) -> int:
+    return len(markdown) - len(markdown.lstrip("#"))
+
+def clean_block_markdown_syntax(markdown: str, blocktype: BlockType) -> str:
+    if blocktype == BlockType.PARAGRAPH:
+        lines = markdown.split("\n")
+        stripped_lines = [line.strip() for line in lines]
+        return " ".join(stripped_lines)
+    if blocktype == BlockType.HEADING:
+        hash_count = determine_header_level(markdown)
+        return markdown[hash_count:]
+    if blocktype == BlockType.QUOTE:
+        list_items = markdown.split("\n")
+        replaced_items = []
+        for item in list_items:
+            replaced_items.append(item.replace("> ", "", 1))
+        return "\n".join(replaced_items)
+    if blocktype == BlockType.UNORDERED_LIST:
+        list_items = markdown.split("\n")
+        replaced_items = []
+        for item in list_items:
+            replaced_items.append(item.replace("- ", "", 1))
+        return "\n".join(replaced_items)
+    if blocktype == BlockType.ORDERED_LIST:
+        list_items = markdown.split("\n")
+        replaced_items = []
+        for number, line in enumerate(list_items):
+            replaced_items.append(line.replace(f"{number+1}. ", "", 1))
+        return "\n".join(replaced_items)
+    if blocktype == BlockType.CODE:
+        removed_backticks = markdown[3:-3]
+        lines = removed_backticks.lstrip().split("\n")
+        stripped_lines = [line.strip() for line in lines]
+        return "\n".join(stripped_lines)
+    return markdown

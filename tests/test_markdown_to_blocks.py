@@ -4,6 +4,7 @@ from helpers import markdown_to_blocks
 
 class TestMarkdownToBlocks(unittest.TestCase):
     def test_markdown_to_blocks(self):
+        """Verify trimmed block separation while preserving newlines within blocks."""
         md = """
 This is **bolded** paragraph
 
