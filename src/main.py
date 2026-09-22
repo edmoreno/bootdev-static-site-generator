@@ -1,7 +1,7 @@
-from file_helpers import copy_files_recursive, generate_page
+from file_helpers import copy_files_recursive, generate_pages_recursive
 
 def main():
     copy_files_recursive("static", "public")
-    generate_page("content/index.md", "template.html", "public/index.html")
+    generate_pages_recursive("content", "template.html", "public")
 
 main()
