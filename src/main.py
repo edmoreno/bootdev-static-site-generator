@@ -1,9 +1,6 @@
-from textnode import TextNode, TextType
-
+from file_helpers import copy_files_recursive
 
 def main():
-    """Run the sample TextNode demonstration."""
-    text_node = TextNode("this is dummy text", TextType.BOLD_TEXT, "fake.url")
-    print(text_node)
+    copy_files_recursive("static", "public")
 
 main()
