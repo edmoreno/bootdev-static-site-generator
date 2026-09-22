@@ -13,7 +13,7 @@ class BlockType(Enum):
 
 def block_to_blocktype(markdown_block: str) -> BlockType:
     """Classify a Markdown block, defaulting to paragraph when no other pattern matches."""
-    if re.match(r"^#{1,6}[ ]", markdown_block):
+    if re.match(r"^#{1,6}(?:[ \t]+.*|$)", markdown_block):
         return BlockType.HEADING
     elif re.search(r"^```\n.*```\Z", markdown_block, flags=re.DOTALL):
         return BlockType.CODE

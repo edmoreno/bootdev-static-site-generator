@@ -195,7 +195,7 @@ def clean_block_markdown_syntax(markdown: str, blocktype: BlockType) -> str:
         return " ".join(stripped_lines)
     if blocktype == BlockType.HEADING:
         hash_count = determine_header_level(markdown)
-        return markdown[hash_count:]
+        return markdown[hash_count:].lstrip().rstrip()
     if blocktype == BlockType.QUOTE:
         list_items = markdown.split("\n")
         replaced_items = []
@@ -215,8 +215,15 @@ def clean_block_markdown_syntax(markdown: str, blocktype: BlockType) -> str:
             replaced_items.append(line.replace(f"{number+1}. ", "", 1))
         return "\n".join(replaced_items)
     if blocktype == BlockType.CODE:
-        removed_backticks = markdown[3:-3]
-        lines = removed_backticks.lstrip().split("\n")
-        stripped_lines = [line.strip() for line in lines]
-        return "\n".join(stripped_lines)
+        if not markdown.startswith("```"):
+            return markdown
+
+        content = markdown[4:-3]
+        lines = content.split("\n")
+        non_empty_lines = [line for line in lines if line.strip()]
+        if non_empty_lines:
+            min_indent = min(len(line) - len(line.lstrip(" ")) for line in non_empty_lines)
+            if min_indent:
+                lines = [line[min_indent:] if line.strip() else "" for line in lines]
+        return "\n".join(lines)
     return markdown
