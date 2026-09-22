@@ -227,3 +227,11 @@ def clean_block_markdown_syntax(markdown: str, blocktype: BlockType) -> str:
                 lines = [line[min_indent:] if line.strip() else "" for line in lines]
         return "\n".join(lines)
     return markdown
+
+def extract_title(markdown: str) -> str:
+    match = re.search(r"^# (.*)", markdown)
+
+    if match:
+        return match.group(1)
+    else:
+        raise Exception("No h1 header found!")

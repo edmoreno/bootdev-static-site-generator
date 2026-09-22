@@ -22,3 +22,4 @@ def copy_files_recursive(source_dir: str, destination_dir: str) -> None:
             copy_files_recursive(full_source_path, full_destination_path)
 
     return None
+
